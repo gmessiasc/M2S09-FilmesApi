@@ -4,6 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using FilmesApi.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using FilmesApi.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FilmesApi.Controllers;
 
@@ -11,28 +15,44 @@ namespace FilmesApi.Controllers;
 [Route("api/filmes")]
 public class FilmeController : ControllerBase
 {
-    private IList<Filme> Filmes = MockFilmes.Filmes;
+    private readonly FilmeDbContext context;
+
+    public FilmeController(FilmeDbContext context)
+    {
+        this.context = context;
+    }
 
     [HttpGet]
-    public IActionResult Get() {
-      return Ok(Filmes);
+    public async Task<ActionResult<List<Filme>>> Get() {
+      return Ok(await context.Filmes.ToListAsync());
     }
 
     [HttpGet("{id}")]
-    public IActionResult Get(int id) {    
-      Filme filme = Filmes.ElementAtOrDefault(id - 1);
-      if (filme == null)
-      {
-          return NotFound("Não existe filme com o índice apresentado.");
-      }
+    public async Task<ActionResult<Filme>> Get(int id) {
+        Filme? filme = await context.Filmes.FindAsync(id);
 
-      return Ok(filme);
+        if (filme is null)
+        {
+          return NotFound("Não existe filme com o índice apresentado.");
+        }
+
+        return Ok(filme);
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Filme dto) {
-      Filmes.Add(dto);
-      return Ok(Filmes.Last());
+    public async Task<ActionResult<Filme>> Post([FromBody] Filme dto)
+    {
+        try
+        {
+            var filme = context.Filmes.Add(dto);
+            await context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(Get), filme);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 
     [HttpPut("{id}")]

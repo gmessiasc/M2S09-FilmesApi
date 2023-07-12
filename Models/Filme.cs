@@ -1,19 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FilmesApi.Models;
 
+[Table("Filmes")]
 public class Filme
 {
+    [Key]
     public int Id { get; set; }
 
-    public String Name { get; set; }
+    [Required]
+    public string Name { get; set; }
 
-    public String Director { get; set; }
+    [Required]
+    public string Director { get; set; }
 
-    public String Genre { get; set; }
+    [Required]
+    public string Genre { get; set; }
 
+    [Required]
     public int Duration { get; set; }
 }
+    
